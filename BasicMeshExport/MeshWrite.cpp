@@ -3,6 +3,8 @@
 #include "Mesh.pb.h"
 #include <algorithm>
 #include <numeric>
+#include <cstdlib>
+#include <random>
 
 int main(int argc, char* argv[])
 {
@@ -29,14 +31,29 @@ int main(int argc, char* argv[])
     std::cerr << "Failed to parse meshes\n";
   return EXIT_FAILURE;
   }
-  std::vector<float> data(200);
-  std::iota(std::begin(data),std::end(data),1);
-  meshes.add_mesh()->set_name("Mesh1");
-  meshes.add_mesh()->set_startoffset(0);
-  meshes.add_mesh()->set_endoffset(data.size()*sizeof(float));
+
+  std::random_device rd;  //Will be used to obtain a seed for the random number engine
+  std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+
+  std::uniform_int_distribution<int> uniform_dist(1, 2000);
+  std::uniform_real_distribution<float> float_dist(-20.0f, 20.0f);
+
+  std::vector<float> data(uniform_dist(gen));
+  float n={0};
+  std::generate(std::begin(data),std::end(data),
+                [&float_dist,&gen, &n]()
+                {
+                  return float_dist(gen);
+                });
+  auto writer=meshes.add_mesh();
+  char meshName[]="Mesh_XXXXXX";
+  mkstemp(meshName);
+  writer->set_name(meshName);
+  writer->set_startoffset(0);
+  writer->set_endoffset(data.size()*sizeof(float));
 
   google::protobuf::RepeatedField<float> d(std::begin(data), std::end(data));
-  meshes.add_mesh()->mutable_data()->Swap(&d);
+  writer->mutable_data()->Swap(&d);
 
   {
   // Write the new address book back to disk.
