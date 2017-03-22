@@ -1,0 +1,17 @@
+syntax = "proto2";
+package meshExport;
+
+message meshData
+{
+  required string name=1;
+  required int32 startOffset=2;
+  required int32 endOffset=3;
+  repeated float data=4 [packed=true];
+}
+
+message meshes {
+  repeated meshData mesh  = 1;
+}
+
+
+
